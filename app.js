@@ -19,6 +19,45 @@ const App = (() => {
     const t = Math.max(0, Math.floor(ms / 1000)), h = Math.floor(t / 3600), m = Math.floor(t / 60) % 60, s = t % 60;
     return h ? `${h}時間${String(m).padStart(2, "0")}分` : `${m}:${String(s).padStart(2, "0")}`;
   }
+  // ---------------- 締切ベル（締切の1分前に鳴らす。ON/OFFはこの端末だけに記憶）
+  const Bell = (() => {
+    let on = false, ctx = null; const rung = new Set();
+    try { on = localStorage.getItem("bell") === "1"; } catch (e) { }
+    function ring() {
+      try {
+        ctx = ctx || new (window.AudioContext || window.webkitAudioContext)();
+        if (ctx.state === "suspended") ctx.resume();
+        const t0 = ctx.currentTime, dur = 2.4, out = ctx.createGain();
+        out.gain.value = 0.0001; out.connect(ctx.destination);
+        out.gain.setValueAtTime(0.0001, t0); out.gain.exponentialRampToValueAtTime(0.5, t0 + 0.02);
+        out.gain.setValueAtTime(0.5, t0 + dur - 0.3); out.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+        const trem = ctx.createGain(); trem.gain.value = 0.5; trem.connect(out);          // ジリリ（打ち鳴らし）
+        const lfo = ctx.createOscillator(), lg = ctx.createGain(); lfo.type = "square"; lfo.frequency.value = 18; lg.gain.value = 0.5;
+        lfo.connect(lg); lg.connect(trem.gain); lfo.start(t0); lfo.stop(t0 + dur);
+        [[1046, 0.5], [2637, 0.25], [4186, 0.12]].forEach(([f, v]) => {                    // ベルの倍音
+          const o = ctx.createOscillator(), g = ctx.createGain(); o.type = "sine"; o.frequency.value = f; g.gain.value = v;
+          o.connect(g); g.connect(trem); o.start(t0); o.stop(t0 + dur);
+        });
+        if (navigator.vibrate) navigator.vibrate([300, 150, 300, 150, 300]);
+      } catch (e) { }
+    }
+    function unlock() {           // スマホは、画面を1回触るまで音を出せない。最初のタッチで準備しておく
+      try { ctx = ctx || new (window.AudioContext || window.webkitAudioContext)(); if (ctx.state === "suspended") ctx.resume();
+        const o = ctx.createOscillator(), g = ctx.createGain(); g.gain.value = 0.0001; o.connect(g); g.connect(ctx.destination); o.start(); o.stop(ctx.currentTime + 0.01); } catch (e) { }
+    }
+    ["touchstart", "click", "keydown"].forEach(ev => document.addEventListener(ev, () => { if (on) unlock(); }, { passive: true }));
+    function btn() { const b = $("bell"); if (b) { b.textContent = on ? "🔔 ベル ON" : "🔕 ベル OFF"; b.classList.toggle("on", on); } }
+    function toggle() { on = !on; try { localStorage.setItem("bell", on ? "1" : "0"); } catch (e) { } btn(); if (on) ring(); }   // ONにした時に1回鳴らして確認（スマホは押した時でないと音が出せない）
+    function check(now) {         // 締切の1分前を過ぎたレースで、まだ鳴らしていないものがあれば鳴らす
+      if (!on || !D) return;
+      for (const r of D.races) {
+        const c = closeDate(r); if (!c) continue;
+        const ms = c - now, k = D.date + r.key;
+        if (ms > 0 && ms <= 60000 && !rung.has(k)) { rung.add(k); ring(); }
+      }
+    }
+    return { toggle, check, btn };
+  })();
   function nextRace() {           // 締切前の、いちばん近いレース
     if (!D) return null;
     const now = new Date();
@@ -29,6 +68,7 @@ const App = (() => {
     const n = new Date();
     $("clock").textContent = n.toLocaleTimeString("ja-JP", { hour12: false });
     $("today").textContent = n.toLocaleDateString("ja-JP", { month: "long", day: "numeric", weekday: "short" });
+    Bell.check(n);
     const nx = nextRace(), el = $("next");
     if (!nx) { el.innerHTML = `<span class="lab">次のレース</span><b>${D ? "本日の締切は終了" : "—"}</b>`; }
     else {
@@ -150,6 +190,7 @@ const App = (() => {
   async function page() {
     const q = new URLSearchParams(location.search); forcedDay = q.get("d");
     setInterval(tick, 1000);
+    if ($("bell")) { $("bell").onclick = Bell.toggle; Bell.btn(); }
     try { await load(); } catch (e) { $("main").innerHTML = `<p class="pad muted">データを読めませんでした。</p>`; return; }
     tick(); render();
     setInterval(async () => { try { await load(); render(); } catch (e) { } }, 60000);
