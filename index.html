@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>シミュ予想</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top">
+  <div class="now"><div class="clock" id="clock">--:--:--</div><div class="date" id="today"></div></div>
+  <div class="next" id="next"><span class="lab">次のレース</span><b>—</b></div>
+</header>
+<nav class="venues" id="venues"></nav>
+<nav class="rnums" id="rnums"></nav>
+<main id="main"><p class="muted pad">読み込み中…</p></main>
+<footer class="foot">
+  <a href="shushi.html" class="btn">本日の収支 →</a>
+  <p class="muted">1万回のレースシミュレーション（v8）による予想です。オッズ・人気は使っていません。発走30分前に出し直します。馬券の購入はご自身の判断で。</p>
+  <p class="muted" id="upd"></p>
+</footer>
+<script src="app.js"></script>
+<script>App.page();</script>
+</body>
+</html>

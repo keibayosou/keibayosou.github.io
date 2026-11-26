@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>本日の収支</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top">
+  <div class="now"><div class="clock" id="clock">--:--:--</div><div class="date" id="today"></div></div>
+  <div class="next" id="next"><span class="lab">次のレース</span><b>—</b></div>
+</header>
+<div class="pad row"><a href="index.html" class="btn ghost">← 予想に戻る</a><select id="day" class="sel"></select></div>
+<main id="main"><p class="muted pad">読み込み中…</p></main>
+<footer class="foot"><p class="muted">各買い方を毎レース100円単位で買ったときの計算です（①100円・②200円・③〜⑤1,000円）。結果と払戻はJRA-VANの速報から。</p><p class="muted" id="upd"></p></footer>
+<script src="app.js"></script>
+<script>App.shushi();</script>
+</body>
+</html>
