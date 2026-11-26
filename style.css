@@ -165,3 +165,13 @@ table.pt tr[data-d]{cursor:pointer}
 .bell{margin-left:6px;border:1px solid var(--line);background:var(--card);color:var(--muted);border-radius:999px;padding:2px 10px;font-size:12px;cursor:pointer;vertical-align:middle}
 .bell.on{border-color:var(--warn);color:var(--warn);font-weight:700;background:var(--warn-soft)}
 @media (min-width:1000px){.bell{font-size:14px;padding:4px 14px}}
+/* PC: 時計を真ん中に（左=日付とベル・中=時計・右=次のレースと締切） */
+@media (min-width:1000px){
+  .top{display:grid;grid-template-columns:1fr auto 1fr;align-items:center}
+  .top .now{display:contents}
+  .top .now .clock{grid-column:2;grid-row:1;text-align:center;font-size:72px}
+  .top .now .date{grid-column:1;grid-row:1;font-size:17px}
+  .top .next{grid-column:3;grid-row:1;justify-self:end;max-width:none}
+  .shushi .top .now .clock,.howto .top .clock{font-size:56px}
+}
+@media (min-width:1000px){.howto .top{display:flex}}

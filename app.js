@@ -17,7 +17,7 @@ const App = (() => {
   const hhmm = d => `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
   function left(ms) {
     const t = Math.max(0, Math.floor(ms / 1000)), h = Math.floor(t / 3600), m = Math.floor(t / 60) % 60, s = t % 60;
-    return h ? `${h}時間${String(m).padStart(2, "0")}分` : `${m}:${String(s).padStart(2, "0")}`;
+    return h ? `${h}時間${String(m).padStart(2, "0")}分` : m ? `${m}分${String(s).padStart(2, "0")}秒` : `${s}秒`;
   }
   // ---------------- 締切ベル（締切の1分前に鳴らす。ON/OFFはこの端末だけに記憶）
   const Bell = (() => {
@@ -74,7 +74,7 @@ const App = (() => {
     else {
       const ms = closeDate(nx) - n;
       el.innerHTML = `<span class="lab">次のレース　${esc(nx.jname)}${nx.rn}R ${esc(nx.post)}発走</span>
-        <span class="cd ${ms < 300000 ? "hot" : ""}"><small>馬券締切まで</small>${left(ms)}</span>`;
+        <span class="cd ${ms < 300000 ? "hot" : ""}"><small>馬券締切まで あと</small>${left(ms)}</span>`;
     }
     const rc = $("rclose");                              // 表示中のレースの締切
     if (rc && D) {
