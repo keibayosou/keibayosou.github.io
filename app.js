@@ -48,8 +48,13 @@ const App = (() => {
     ["touchstart", "click", "keydown"].forEach(ev => document.addEventListener(ev, () => { if (on) unlock(); }, { passive: true }));
     function btn() { const b = $("bell"); if (b) { b.textContent = on ? "🔔 ベル ON" : "🔕 ベル OFF"; b.classList.toggle("on", on); } }
     function toggle() { on = !on; try { localStorage.setItem("bell", on ? "1" : "0"); } catch (e) { } btn(); if (on) ring(); }   // ONにした時に1回鳴らして確認（スマホは押した時でないと音が出せない）
+    function sync() {             // 別のタブでON/OFFを変えたら、こちらも合わせる（OFFのはずが鳴る、を防ぐ）
+      try { const v = localStorage.getItem("bell") === "1"; if (v !== on) { on = v; btn(); } } catch (e) { }
+    }
+    window.addEventListener("storage", e => { if (e.key === "bell") sync(); });
     function check(now) {         // 締切の1分前を過ぎたレースで、まだ鳴らしていないものがあれば鳴らす
-      if (!on || !D) return;
+      sync();
+      if (!on || !D || !$("bell")) return;                 // ベルのボタンがあるページ（予想）だけで鳴らす
       for (const r of D.races) {
         const c = closeDate(r); if (!c) continue;
         const ms = c - now, k = D.date + r.key;
