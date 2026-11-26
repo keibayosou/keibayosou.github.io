@@ -128,11 +128,13 @@ const App = (() => {
   function renderNav() {
     const ven = [...new Set(D.races.map(r => r.jname))];
     if (!sel.jyo || !ven.includes(sel.jyo)) sel.jyo = ven[0];
-    $("venues").innerHTML = ven.map(v => `<button class="${v === sel.jyo ? "on" : ""}" data-v="${esc(v)}">${esc(v)}</button>`).join("");
+    $("venues").innerHTML = `<button class="auto ${userPicked ? "" : "on"}" id="autobtn">${userPicked ? "▶ 次のレースへ" : "⏱ 自動で次のレース"}</button>`
+      + ven.map(v => `<button class="${v === sel.jyo ? "on" : ""}" data-v="${esc(v)}">${esc(v)}</button>`).join("");
     const rs = D.races.filter(r => r.jname === sel.jyo).sort((a, b) => a.rn - b.rn);
     const now = new Date();
     $("rnums").innerHTML = rs.map(r => `<button class="${r.key === sel.key ? "on" : ""} ${postDate(r) && postDate(r) < now ? "done" : ""}" data-k="${r.key}">${r.rn}R<small>${esc(r.post)}</small></button>`).join("");
-    document.querySelectorAll("#venues button").forEach(b => b.onclick = () => { sel.jyo = b.dataset.v; const f = D.races.filter(r => r.jname === sel.jyo); const nx = nextRace(); sel.key = (nx && nx.jname === sel.jyo ? nx : f.sort((a, c) => a.rn - c.rn)[0]).key; userPicked = true; render(); });
+    $("autobtn").onclick = () => { userPicked = false; render(); window.scrollTo({ top: 0, behavior: "smooth" }); };
+    document.querySelectorAll("#venues button[data-v]").forEach(b => b.onclick = () => { sel.jyo = b.dataset.v; const f = D.races.filter(r => r.jname === sel.jyo); const nx = nextRace(); sel.key = (nx && nx.jname === sel.jyo ? nx : f.sort((a, c) => a.rn - c.rn)[0]).key; userPicked = true; render(); });
     document.querySelectorAll("#rnums button").forEach(b => b.onclick = () => { sel.key = b.dataset.k; userPicked = true; render(); });
   }
   function render() {
@@ -151,6 +153,8 @@ const App = (() => {
     try { await load(); } catch (e) { $("main").innerHTML = `<p class="pad muted">データを読めませんでした。</p>`; return; }
     tick(); render();
     setInterval(async () => { try { await load(); render(); } catch (e) { } }, 60000);
+    // スマホでブラウザに戻ったら、すぐに最新を読み直す
+    document.addEventListener("visibilitychange", async () => { if (document.visibilityState === "visible") { try { await load(); render(); tick(); } catch (e) { } } });
   }
   // ---------------- 収支
   function shushiRender() {
@@ -284,6 +288,7 @@ const App = (() => {
     const q = new URLSearchParams(location.search).get("d");
     await showDay(q || D.date);
     setInterval(async () => { try { await loadHist(); await showDay(cur); } catch (e) { } }, 60000);
+    document.addEventListener("visibilitychange", async () => { if (document.visibilityState === "visible") { try { await loadHist(); await showDay(cur); tick(); } catch (e) { } } });
   }
   return { page, shushi, days: null };
 })();
