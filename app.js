@@ -297,10 +297,10 @@ const App = (() => {
         <p class="muted">金額は円（万＝1万円）。各買い方とも1R 2,000円。② ◎-2位,3位　③ ◎軸で2〜6位へ10点　④ 1〜5位のBOX　⑤ 1〜5位のBOX</p>
         <p class="muted">${live.length ? `実戦は${md(live[0].d)}から。それより前は` : ""}過去のシミュレーション（予想の作り方は本番と同じ・朝の情報まで）を、実際の払戻で計算したもの。新馬戦・障害は含みません。</p></section>
       ${(() => { const [z, n] = sumT5(H.days); return t5Card(z, n, "上位5頭着順　2026年の通算"); })()}
+      ${(H.venues || []).length ? `<section class="card"><h2>会場別（2026年）</h2>${tog}<div class="scroll"><table class="pt h"><thead>${head.replace("{L}", "会場")}</thead><tbody>${H.venues.map(v => `<tr><td class="l">${esc(v.v)}</td><td>${v.n}</td>${rowCells(v)}</tr>`).join("")}</tbody></table></div></section>` : ""}
       <section class="card"><h2>開催ごと（土日・3日開催はまとめて）</h2>${tog}<div class="scroll"><table class="pt h"><thead>${head.replace("{L}", "開催")}</thead><tbody>${gr}</tbody></table></div></section>
       <section class="card"><h2>日別</h2>${tog}<div class="scroll"><table class="pt h"><thead>${head.replace("{L}", "日付")}</thead><tbody>${dr}</tbody></table></div></section>`;
     el.querySelectorAll("button[data-m]").forEach(b => b.onclick = () => { hMode = b.dataset.m; histRender(); });
-    el.querySelectorAll("tr[data-d]").forEach(t => t.onclick = () => { showDay(t.dataset.d); window.scrollTo({ top: 0, behavior: "smooth" }); });
   }
   async function loadHist() { try { H = await (await fetch("data/history.json?t=" + Date.now())).json(); } catch (e) { H = null; } }
   // ---------------- 上位5頭着順（シミュ1〜5位が 1着・2着・3着 に入った割合）
