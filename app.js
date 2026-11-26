@@ -219,6 +219,7 @@ const App = (() => {
       <section class="card"><h2>${md(D.date)}の収支 <span class="stage" style="margin:0;padding:1px 8px">実戦</span></h2>${kpi}</section>
       <section class="card"><h2>買い方ごと</h2><div class="scroll"><table class="pt"><thead><tr><th class="l">買い方</th><th>R</th><th>的中</th><th>投資</th><th>払戻</th><th>収支</th><th>回収率</th><th>過去</th></tr></thead><tbody>${rows}</tbody></table></div>
         <p class="muted">「過去」は2026年1/4〜11/23（2,754R）のシミュレーションでの回収率。</p></section>
+      ${(() => { const z = [0, 1, 2, 3, 4].map(() => [0, 0, 0]); done.forEach(r => (r.result.top5_fin || []).forEach((f, i) => { if (f >= 1 && f <= 3) z[i][f - 1]++; })); return t5Card(z, done.length, `上位5頭着順　${md(D.date)}`); })()}
       <section class="card"><h2>レースごとの払戻（円）</h2><div class="scroll"><table class="pt h"><thead><tr><th class="l">レース</th><th>等級</th><th>◎</th><th>着順</th><th>人気</th><th>オッズ</th><th>①</th><th>②</th><th>③</th><th>④</th><th>⑤</th></tr></thead><tbody>${rr || `<tr><td class="l muted" colspan="11">まだ結果がありません</td></tr>`}</tbody></table></div></section>
       <div id="hist"></div>`;
     histRender();
@@ -282,12 +283,25 @@ const App = (() => {
         <div class="scroll" style="margin-top:10px"><table class="pt"><thead><tr><th class="l">買い方</th><th>的中率</th><th>投資</th><th>払戻</th><th>収支</th><th>回収率</th></tr></thead><tbody>${yr}</tbody></table></div>
         <p class="muted">金額は円（万＝1万円）。各買い方とも1R 2,000円。② ◎-2位,3位　③ ◎軸で2〜6位へ10点　④ 1〜5位のBOX　⑤ 1〜5位のBOX</p>
         <p class="muted">${live.length ? `実戦は${md(live[0].d)}から。それより前は` : ""}過去のシミュレーション（予想の作り方は本番と同じ・朝の情報まで）を、実際の払戻で計算したもの。新馬戦・障害は含みません。</p></section>
+      ${(() => { const [z, n] = sumT5(H.days); return t5Card(z, n, "上位5頭着順　2026年の通算"); })()}
       <section class="card"><h2>開催ごと（土日・3日開催はまとめて）</h2>${tog}<div class="scroll"><table class="pt h"><thead>${head.replace("{L}", "開催")}</thead><tbody>${gr}</tbody></table></div></section>
       <section class="card"><h2>日別</h2>${tog}<div class="scroll"><table class="pt h"><thead>${head.replace("{L}", "日付")}</thead><tbody>${dr}</tbody></table></div></section>`;
     el.querySelectorAll("button[data-m]").forEach(b => b.onclick = () => { hMode = b.dataset.m; histRender(); });
     el.querySelectorAll("tr[data-d]").forEach(t => t.onclick = () => { showDay(t.dataset.d); window.scrollTo({ top: 0, behavior: "smooth" }); });
   }
   async function loadHist() { try { H = await (await fetch("data/history.json?t=" + Date.now())).json(); } catch (e) { H = null; } }
+  // ---------------- 上位5頭着順（シミュ1〜5位が 1着・2着・3着 に入った割合）
+  function t5Card(t5, n, title) {
+    if (!t5 || !n) return "";
+    const MK = ["◎", "○", "▲", "△", "☆"];
+    const p = (c) => `${(c / n * 100).toFixed(1)}%<small class="muted"> ${c}</small>`;
+    const rows = t5.map((v, i) => { const t3 = v[0] + v[1] + v[2];
+      return `<tr><td class="l" style="white-space:nowrap">${i + 1}位 ${MK[i]}</td><td>${p(v[0])}</td><td>${p(v[1])}</td><td>${p(v[2])}</td><td><b>${(t3 / n * 100).toFixed(1)}%</b></td><td class="muted">${((n - t3) / n * 100).toFixed(1)}%</td></tr>`; }).join("");
+    return `<section class="card"><h2>${title}（${n.toLocaleString()}R）</h2><div class="scroll"><table class="pt"><thead><tr><th class="l">シミュ順位</th><th>1着</th><th>2着</th><th>3着</th><th>3着以内</th><th>4着以下</th></tr></thead><tbody>${rows}</tbody></table></div>
+      <p class="muted">小さい数字はレース数。</p></section>`;
+  }
+  const sumT5 = ds => { const z = [0, 1, 2, 3, 4].map(() => [0, 0, 0]); let n = 0;
+    ds.forEach(d => { if (!d.t5) return; n += d.n; d.t5.forEach((v, i) => v.forEach((c, j) => z[i][j] += c)); }); return [z, n]; };
   // ---------------- 日付の選択（カレンダー・◀▶）。2026/1/4〜は過去のシミュ、実戦の日はその日のデータ
   let HR = null, cur = null;
   const iso = d => `${d.slice(0, 4)}-${d.slice(4, 6)}-${d.slice(6, 8)}`;
@@ -317,6 +331,7 @@ const App = (() => {
       <section class="card"><h2>${md(d)}の収支 <span class="stage ${hd.src === "実戦" ? "" : "morning"}" style="margin:0;padding:1px 8px">${lab}</span>　<span class="muted">${esc(hd.v.join("・"))}</span></h2>${kpi}</section>
       <section class="card"><h2>買い方ごと（各2,000円・円）</h2><div class="scroll"><table class="pt"><thead><tr><th class="l">買い方</th><th>的中</th><th>投資</th><th>払戻</th><th>収支</th><th>回収率</th></tr></thead><tbody>${rows}</tbody></table></div>
         ${hd.src === "実戦" ? "" : `<p class="muted">過去のシミュレーション（朝の情報まで・新馬戦と障害は除く）を実際の払戻で計算。</p>`}</section>
+      ${t5Card(hd.t5, hd.n, `上位5頭着順　${md(d)}`)}
       <section class="card"><h2>レースごとの払戻（円）</h2><div class="scroll"><table class="pt h"><thead><tr><th class="l">レース</th><th>等級</th><th>◎</th><th>着順</th><th>人気</th><th>オッズ</th><th>①</th><th>②</th><th>③</th><th>④</th><th>⑤</th></tr></thead><tbody>${race}</tbody></table></div></section>
       <div id="hist"></div>`;
     histRender();

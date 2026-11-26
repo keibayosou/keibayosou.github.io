@@ -175,3 +175,4 @@ table.pt tr[data-d]{cursor:pointer}
   .shushi .top .now .clock,.howto .top .clock{font-size:56px}
 }
 @media (min-width:1000px){.howto .top{display:flex}}
+table.pt td small{font-size:10.5px}
