@@ -115,3 +115,47 @@ table.pt tr[data-d]{cursor:pointer}
   table.pt td.nmc{max-width:78px}
   table.pt .wk{width:24px;height:24px;font-size:12.5px}
 }
+/* ---- 時計・締切（2026-11-26） ---- */
+.clock{font-size:34px;line-height:1.1}
+.next{max-width:62%}
+.next .lab{font-size:11.5px;line-height:1.35}
+.next .cd{font-size:26px;line-height:1.15;margin-top:2px}
+.next .cd small{display:block;font-size:11px;font-weight:600;color:var(--muted)}
+.next .cd.hot,.rclose.hot b{color:var(--warn)}
+.rclose{margin-top:6px;font-size:13.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.rclose b{color:var(--accent);font-size:16px;margin-left:2px}
+.rclose.done b{color:var(--warn)}
+/* ---- PC（横に広い画面）: 文字を大きく・2列 ---- */
+@media (min-width:1000px){
+  html,body{font-size:16.5px}
+  .top{padding:14px 32px}
+  .clock{font-size:56px;letter-spacing:1px}
+  .date{font-size:15px}
+  .next .lab{font-size:15px}
+  .next .cd{font-size:44px}
+  .next .cd small{font-size:14px}
+  .venues,.rnums{max-width:1280px;margin:0 auto;padding:14px 24px 0}
+  .venues button{font-size:16px;padding:8px 20px}
+  .rnums button{font-size:16px;padding:7px 14px;min-width:60px}
+  .rnums button small{font-size:12px}
+  main{max-width:1280px;padding:10px 12px 10px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 4px;align-items:start}
+  main>p{grid-column:1/-1}
+  .card{padding:18px 20px}
+  .card h2{font-size:15px}
+  .race-h .rt{font-size:28px}
+  .race-h .rs{font-size:16px}
+  .rclose{font-size:16px}.rclose b{font-size:22px}
+  .grade{min-width:84px;padding:8px 12px}.grade b{font-size:34px}.grade span{font-size:12.5px}
+  .stage{font-size:13.5px}
+  .pr b{font-size:19px}.pr{font-size:14.5px}
+  .nm{font-size:17px}.nm small{font-size:13px}
+  .mk{font-size:24px}
+  .bet .bh b{font-size:17px}.bet .pts{font-size:16px}.bet .past{font-size:13px}
+  table.pt{font-size:15px}table.pt th{font-size:13px}
+  table.pt td.nmc{max-width:200px}
+  .memo .mt{font-size:15px}.memo .mc{font-size:14px}
+  ul.why{font-size:15.5px}
+  .foot{max-width:1280px;padding:6px 32px 40px}
+  .kpi b{font-size:26px}
+}
+@media (min-width:1000px){.shushi main{display:block;max-width:1100px}}

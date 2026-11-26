@@ -12,10 +12,17 @@ const App = (() => {
     const d = D.date;
     return new Date(+d.slice(0, 4), +d.slice(4, 6) - 1, +d.slice(6, 8), +r.post.slice(0, 2), +r.post.slice(3, 5));
   }
-  function nextRace() {
+  const CLOSE_MIN = 2;                                    // 馬券の締切＝発走2分前
+  const closeDate = r => { const p = postDate(r); return p ? new Date(p - CLOSE_MIN * 60000) : null; };
+  const hhmm = d => `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+  function left(ms) {
+    const t = Math.max(0, Math.floor(ms / 1000)), h = Math.floor(t / 3600), m = Math.floor(t / 60) % 60, s = t % 60;
+    return h ? `${h}時間${String(m).padStart(2, "0")}分` : `${m}:${String(s).padStart(2, "0")}`;
+  }
+  function nextRace() {           // 締切前の、いちばん近いレース
     if (!D) return null;
     const now = new Date();
-    const up = D.races.filter(r => { const p = postDate(r); return p && p > now; });
+    const up = D.races.filter(r => { const c = closeDate(r); return c && c > now; }).sort((a, b) => closeDate(a) - closeDate(b));
     return up.length ? up[0] : null;
   }
   function tick() {
@@ -23,10 +30,18 @@ const App = (() => {
     $("clock").textContent = n.toLocaleTimeString("ja-JP", { hour12: false });
     $("today").textContent = n.toLocaleDateString("ja-JP", { month: "long", day: "numeric", weekday: "short" });
     const nx = nextRace(), el = $("next");
-    if (!nx) { el.innerHTML = `<span class="lab">次のレース</span><b>${D ? "本日は終了" : "—"}</b>`; return; }
-    const ms = postDate(nx) - n, m = Math.floor(ms / 60000), s = Math.floor(ms / 1000) % 60;
-    const cd = m >= 60 ? `あと${Math.floor(m / 60)}時間${m % 60}分` : `あと${m}分${String(s).padStart(2, "0")}秒`;
-    el.innerHTML = `<span class="lab">次のレース</span><b>${esc(nx.jname)}${nx.rn}R ${esc(nx.post)}</b><span class="cd">${cd}</span>`;
+    if (!nx) { el.innerHTML = `<span class="lab">次のレース</span><b>${D ? "本日の締切は終了" : "—"}</b>`; }
+    else {
+      const ms = closeDate(nx) - n;
+      el.innerHTML = `<span class="lab">次のレース　${esc(nx.jname)}${nx.rn}R ${esc(nx.post)}発走</span>
+        <span class="cd ${ms < 300000 ? "hot" : ""}"><small>馬券締切まで</small>${left(ms)}</span>`;
+    }
+    const rc = $("rclose");                              // 表示中のレースの締切
+    if (rc && D) {
+      const r = D.races.find(x => x.key === rc.dataset.k), c = r && closeDate(r);
+      if (c) { const ms = c - n; rc.className = "rclose " + (ms <= 0 ? "done" : ms < 300000 ? "hot" : "");
+        rc.innerHTML = ms > 0 ? `締切 ${hhmm(c)}　<b>あと ${left(ms)}</b>` : `締切 ${hhmm(c)}　<b>タイムアップ</b>`; }
+    }
   }
   async function load() {
     const bust = "?t=" + Date.now();
@@ -72,11 +87,12 @@ const App = (() => {
     const oddsNote = r.horses.some(h => h.odds_f) ? "オッズは確定の単勝" : r.horses.some(h => h.odds) ? `オッズは${esc(r.odds_at)}時点の単勝` : "オッズは当日朝から出ます";
     const why = r.reasons.map(t => `<li class="${t.startsWith("⚠") ? "w" : ""}">${esc(t)}</li>`).join("");
     const crs = (r.course.lines || []).map(t => `<li>${esc(t)}</li>`).join("");
-    return `
+    return `<div class="colL">
     <section class="card">
       <div class="race-h"><div>
         <div class="rt">${esc(r.jname)} ${r.rn}R <span style="font-weight:600">${esc(r.post)}発走</span></div>
         <div class="rs">${esc(r.title)}　${esc(r.surf)}${r.dist}m・${r.n}頭${r.going ? "・馬場 " + esc(r.going) : ""}</div>
+        <div id="rclose" class="rclose" data-k="${esc(r.key)}"></div>
         <span class="stage ${r.stage === "30分前" ? "" : "morning"}">${stageTxt}</span>${hist}${notes}
       </div>
       <div class="grade g${esc(r.grade)}"><span>自信</span><b>${esc(r.grade)}</b><span>${GTXT[r.grade] || ""}</span></div></div>
@@ -84,12 +100,13 @@ const App = (() => {
     ${resHtml}
     <section class="card"><h2>推奨馬（シミュレーションの上位5頭）</h2>${top5}</section>
     <section class="card"><h2>おすすめの買い目（各2,000円）</h2>${r.bets.map(b => betBlock(b, res)).join("")}</section>
+    </div><div class="colR">
     <section class="card"><h2>◎ ${r.horses[0].uma} ${esc(r.horses[0].name)} を推す根拠</h2><ul class="why">${why}</ul></section>
     <section class="card"><h2>確率一覧（1万回のシミュレーション）</h2><div class="scroll"><table class="pt">
       <thead><tr><th>順</th><th class="l">印</th><th>馬番</th><th class="l">馬名</th><th>勝率</th><th>2着内</th><th>3着内</th><th>平均着順</th><th>オッズ</th></tr></thead><tbody>${rows}</tbody></table></div><p class="muted" style="margin:6px 0 0">${oddsNote}（表示だけ。予想にはオッズ・人気を使っていません）</p></section>
     <section class="card course"><h2>コースの解説　${esc(r.course.title)}</h2><ul class="why">${crs}</ul></section>
     ${babaCard(r)}
-    ${memoCard(r)}`;
+    ${memoCard(r)}</div>`;
   }
   function babaCard(r) {      // 馬場レポート（参考に反映）
     const b = r.baba; if (!b) return "";
@@ -126,6 +143,7 @@ const App = (() => {
     renderNav();
     const r = D.races.find(x => x.key === sel.key);
     $("main").innerHTML = raceCard(r);
+    tick();
   }
   async function page() {
     const q = new URLSearchParams(location.search); forcedDay = q.get("d");
