@@ -103,7 +103,7 @@ const App = (() => {
     const body = ms.length ? ms.map(m => {
       const h = r.horses.find(x => x.uma === m.uma) || {};
       return `<div class="memo ${m.pick ? "pk" : ""}"><div class="mh">${m.pick ? `<b class="star">★厳選${m.pick}</b>` : ""}${wk(h.waku)}${m.uma || "?"}</span> <b>${esc(m.name)}</b>${h.srk ? `<span class="muted">（シミュ${h.srk}位）</span>` : ""}</div>
-        ${m.memo ? `<div class="mt">次走条件　${esc(m.memo)}</div>` : ""}${m.card ? `<div class="mc">📝 ${esc(m.card)}</div>` : ""}</div>`;
+        ${m.memo ? `<div class="mt">次走条件　${esc(m.memo)}</div>` : ""}${m.card ? `<div class="mc">📝 ${esc(m.card)}</div>` : ""}${m.cond ? `<div class="mt">🎯 次走狙いたい条件　${esc(m.cond)}</div>` : ""}</div>`;
     }).join("") : `<p class="muted" style="margin:0">このレースにメモ馬はいません</p>`;
     return `<section class="card"><h2>メモ馬（参考・予想には入れていません）</h2>${body}</section>`;
   }
@@ -147,7 +147,7 @@ const App = (() => {
       <div><span>5つ合計の払戻</span><b>${yen(Rt)}</b></div><div><span>5つ合計の回収率</span><b>${C ? (Rt / C * 100).toFixed(1) + "%" : "—"}</b></div></div>`;
     const rr = done.map(r => `<tr><td class="l">${esc(r.jname)}${r.rn}R</td><td>${r.grade}</td><td>${r.horses[0].uma}</td><td>${r.result.hon_fin ? r.result.hon_fin + "着" : "—"}</td>${r.result.bets.map(b => `<td class="${b.ret > 0 ? "plus" : "muted"}">${b.ret > 0 ? b.ret.toLocaleString() : "·"}</td>`).join("")}</tr>`).join("");
     $("main").innerHTML = `
-      <section class="card"><h2>${D.date.slice(4, 6)}月${D.date.slice(6, 8)}日の収支</h2>${kpi}</section>
+      <section class="card"><h2>${md(D.date)}の収支 <span class="stage" style="margin:0;padding:1px 8px">実戦</span></h2>${kpi}</section>
       <section class="card"><h2>買い方ごと</h2><div class="scroll"><table class="pt"><thead><tr><th class="l">買い方</th><th>R</th><th>的中</th><th>投資</th><th>払戻</th><th>収支</th><th>回収率</th><th>過去</th></tr></thead><tbody>${rows}</tbody></table></div>
         <p class="muted">「過去」は2026年1/4〜11/23（2,754R）のシミュレーションでの回収率。</p></section>
       <section class="card"><h2>レースごとの払戻（円）</h2><div class="scroll"><table class="pt"><thead><tr><th class="l">レース</th><th>等級</th><th>◎</th><th>◎着順</th><th>①</th><th>②</th><th>③</th><th>④</th><th>⑤</th></tr></thead><tbody>${rr || `<tr><td class="l muted" colspan="9">まだ結果がありません</td></tr>`}</tbody></table></div></section>
@@ -199,11 +199,11 @@ const App = (() => {
     const tag = ds => ds.some(d => d.src === "実戦") ? ` <span class="stage" style="margin:0;padding:1px 6px">実戦</span>` : "";
     const G = groups().reverse();
     const glab = g => { const a = g[0].d, b = g.at(-1).d; if (g.length === 1) return md(a); return md(a) + "〜" + (a.slice(4, 6) === b.slice(4, 6) ? md(b).replace(/^\d+\//, "") : md(b)); };
-    const gr = G.map(g => `<tr><td class="l">${glab(g)}${tag(g)}<br><small class="muted">${[...new Set(g.flatMap(d => d.v))].join("・")}</small></td><td>${g.reduce((a, d) => a + d.n, 0)}</td>${rowCells(sumDays(g))}</tr>`).join("");
+    const gr = G.map(g => `<tr data-d="${g[0].d}"><td class="l">${glab(g)}${tag(g)}<br><small class="muted">${[...new Set(g.flatMap(d => d.v))].join("・")}</small></td><td>${g.reduce((a, d) => a + d.n, 0)}</td>${rowCells(sumDays(g))}</tr>`).join("");
     let lastM = "";
     const dr = H.days.slice().reverse().map(d => {
       const m = d.d.slice(4, 6), mh = m !== lastM ? `<tr><td class="l" colspan="${K.length + 3}" style="background:var(--chip);font-weight:700">${+m}月</td></tr>` : ""; lastM = m;
-      return mh + `<tr><td class="l">${md(d.d)}${tag([d])}<br><small class="muted">${d.v.join("・")}</small></td><td>${d.n}</td>${rowCells(d)}</tr>`;
+      return mh + `<tr data-d="${d.d}"><td class="l">${md(d.d)}${tag([d])}<br><small class="muted">${d.v.join("・")}</small></td><td>${d.n}</td>${rowCells(d)}</tr>`;
     }).join("");
     const tog = `<div class="row" style="margin-bottom:8px"><button class="btn ${hMode === "pl" ? "" : "ghost"}" data-m="pl" style="padding:6px 12px">収支（円）</button><button class="btn ${hMode === "rr" ? "" : "ghost"}" data-m="rr" style="padding:6px 12px">回収率</button></div>`;
     el.innerHTML = `
@@ -216,18 +216,55 @@ const App = (() => {
       <section class="card"><h2>開催ごと（土日・3日開催はまとめて）</h2>${tog}<div class="scroll"><table class="pt h"><thead>${head.replace("{L}", "開催")}</thead><tbody>${gr}</tbody></table></div></section>
       <section class="card"><h2>日別</h2>${tog}<div class="scroll"><table class="pt h"><thead>${head.replace("{L}", "日付")}</thead><tbody>${dr}</tbody></table></div></section>`;
     el.querySelectorAll("button[data-m]").forEach(b => b.onclick = () => { hMode = b.dataset.m; histRender(); });
+    el.querySelectorAll("tr[data-d]").forEach(t => t.onclick = () => { showDay(t.dataset.d); window.scrollTo({ top: 0, behavior: "smooth" }); });
   }
   async function loadHist() { try { H = await (await fetch("data/history.json?t=" + Date.now())).json(); } catch (e) { H = null; } }
+  // ---------------- 日付の選択（カレンダー・◀▶）。2026/1/4〜は過去のシミュ、実戦の日はその日のデータ
+  let HR = null, cur = null;
+  const iso = d => `${d.slice(0, 4)}-${d.slice(4, 6)}-${d.slice(6, 8)}`;
+  const allDays = () => [...new Set([...(H ? H.days.map(x => x.d) : []), ...(App.days || [])])].sort();
+  const plain = x => (x >= 0 ? "+" : "") + x.toLocaleString("ja-JP");
+  async function showDay(d) {
+    cur = d;
+    $("dayc").value = iso(d); $("wd").textContent = `(${WD[dObj(d).getDay()]})`;
+    const hd = H && H.days.find(x => x.d === d);
+    if ((App.days || []).includes(d) && (!hd || hd.src === "実戦")) { forcedDay = d; await load(); shushiRender(); return; }
+    if (!hd) {
+      $("main").innerHTML = `<section class="card"><p class="muted" style="margin:0">${md(d)} は開催がありません。◀ ▶ で前後の開催日に移れます。</p></section><div id="hist"></div>`;
+      histRender(); return;
+    }
+    if (!HR) { try { HR = await (await fetch("data/history_races.json?t=" + Date.now())).json(); } catch (e) { HR = {}; } }
+    const K = Object.keys(H.bet_names), rr = HR[d] || [];
+    let C = 0, R = 0;
+    const rows = K.map(k => {
+      const [c, r, h] = hd.b[k]; C += c; R += r;
+      return `<tr><td class="l" style="white-space:nowrap">${esc(k)} ${esc(SHORT[k] || "")}</td><td>${h}</td><td>${c.toLocaleString()}</td><td>${r.toLocaleString()}</td><td class="${r - c >= 0 ? "plus" : "minus"}">${plain(r - c)}</td><td><b>${c ? (r / c * 100).toFixed(1) + "%" : "—"}</b></td></tr>`;
+    }).join("");
+    const kpi = `<div class="kpi"><div><span>レース</span><b>${hd.n}R</b></div><div><span>5つ合計の投資</span><b>${yen(C)}</b></div>
+      <div><span>5つ合計の払戻</span><b>${yen(R)}</b></div><div><span>5つ合計の回収率</span><b class="${R >= C ? "plus" : ""}">${C ? (R / C * 100).toFixed(1) + "%" : "—"}</b></div></div>`;
+    const race = rr.map(v => `<tr><td class="l">${esc(v[0])}${v[1]}R</td><td>${esc(v[2])}</td><td>${v[3]}</td><td>${v[4] ? v[4] + "着" : "—"}</td>${v.slice(5).map(x => `<td class="${x > 0 ? "plus" : "muted"}">${x > 0 ? x.toLocaleString() : "·"}</td>`).join("")}</tr>`).join("");
+    const lab = hd.src === "実戦" ? "実戦" : "過去のシミュ";
+    $("main").innerHTML = `
+      <section class="card"><h2>${md(d)}の収支 <span class="stage ${hd.src === "実戦" ? "" : "morning"}" style="margin:0;padding:1px 8px">${lab}</span>　<span class="muted">${esc(hd.v.join("・"))}</span></h2>${kpi}</section>
+      <section class="card"><h2>買い方ごと（各2,000円・円）</h2><div class="scroll"><table class="pt"><thead><tr><th class="l">買い方</th><th>的中</th><th>投資</th><th>払戻</th><th>収支</th><th>回収率</th></tr></thead><tbody>${rows}</tbody></table></div>
+        ${hd.src === "実戦" ? "" : `<p class="muted">過去のシミュレーション（朝の情報まで・新馬戦と障害は除く）を実際の払戻で計算。</p>`}</section>
+      <section class="card"><h2>レースごとの払戻（円）</h2><div class="scroll"><table class="pt"><thead><tr><th class="l">レース</th><th>等級</th><th>◎</th><th>◎着順</th><th>①</th><th>②</th><th>③</th><th>④</th><th>⑤</th></tr></thead><tbody>${race}</tbody></table></div></section>
+      <div id="hist"></div>`;
+    histRender();
+  }
   async function shushi() {
     setInterval(tick, 1000);
     await loadHist();
     try { await load(); } catch (e) { $("main").innerHTML = `<p class="pad muted">データを読めませんでした。</p>`; return; }
-    const s = $("day");
-    s.innerHTML = (App.days || [D.date]).map(d => `<option value="${d}">${d.slice(0, 4)}/${d.slice(4, 6)}/${d.slice(6, 8)}</option>`).join("");
-    s.value = D.date;
-    s.onchange = async () => { forcedDay = s.value; await load(); shushiRender(); };
-    tick(); shushiRender();
-    setInterval(async () => { try { await loadHist(); await load(); shushiRender(); } catch (e) { } }, 60000);
+    const dc = $("dayc"), a = allDays();
+    if (a.length) { dc.min = iso(a[0]); dc.max = iso(a.at(-1)); }
+    dc.onchange = () => { if (dc.value) showDay(dc.value.replace(/-/g, "")); };
+    $("prevd").onclick = () => { const p = allDays().filter(x => x < cur).at(-1); if (p) showDay(p); };
+    $("nextd").onclick = () => { const n = allDays().find(x => x > cur); if (n) showDay(n); };
+    tick();
+    const q = new URLSearchParams(location.search).get("d");
+    await showDay(q || D.date);
+    setInterval(async () => { try { await loadHist(); await showDay(cur); } catch (e) { } }, 60000);
   }
   return { page, shushi, days: null };
 })();
