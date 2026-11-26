@@ -145,12 +145,12 @@ const App = (() => {
     const done = D.races.filter(r => r.result);
     const kpi = `<div class="kpi"><div><span>結果が出たレース</span><b>${done.length} / ${D.races.length}R</b></div><div><span>5つ合計の投資</span><b>${yen(C)}</b></div>
       <div><span>5つ合計の払戻</span><b>${yen(Rt)}</b></div><div><span>5つ合計の回収率</span><b>${C ? (Rt / C * 100).toFixed(1) + "%" : "—"}</b></div></div>`;
-    const rr = done.map(r => `<tr><td class="l">${esc(r.jname)}${r.rn}R</td><td>${r.grade}</td><td>${r.horses[0].uma}</td><td>${r.result.hon_fin ? r.result.hon_fin + "着" : "—"}</td>${r.result.bets.map(b => `<td class="${b.ret > 0 ? "plus" : "muted"}">${b.ret > 0 ? b.ret.toLocaleString() : "·"}</td>`).join("")}</tr>`).join("");
+    const rr = done.map(r => `<tr><td class="l">${esc(r.jname)}${r.rn}R</td><td>${r.grade}</td><td>${r.horses[0].uma}</td><td>${r.result.hon_fin ? r.result.hon_fin + "着" : "—"}</td><td>${r.result.hon_ninki ? r.result.hon_ninki + "人気" : "—"}</td><td>${r.result.hon_odds ? r.result.hon_odds.toFixed(1) : "—"}</td>${r.result.bets.map(b => `<td class="${b.ret > 0 ? "plus" : "muted"}">${b.ret > 0 ? b.ret.toLocaleString() : "·"}</td>`).join("")}</tr>`).join("");
     $("main").innerHTML = `
       <section class="card"><h2>${md(D.date)}の収支 <span class="stage" style="margin:0;padding:1px 8px">実戦</span></h2>${kpi}</section>
       <section class="card"><h2>買い方ごと</h2><div class="scroll"><table class="pt"><thead><tr><th class="l">買い方</th><th>R</th><th>的中</th><th>投資</th><th>払戻</th><th>収支</th><th>回収率</th><th>過去</th></tr></thead><tbody>${rows}</tbody></table></div>
         <p class="muted">「過去」は2026年1/4〜11/23（2,754R）のシミュレーションでの回収率。</p></section>
-      <section class="card"><h2>レースごとの払戻（円）</h2><div class="scroll"><table class="pt"><thead><tr><th class="l">レース</th><th>等級</th><th>◎</th><th>◎着順</th><th>①</th><th>②</th><th>③</th><th>④</th><th>⑤</th></tr></thead><tbody>${rr || `<tr><td class="l muted" colspan="9">まだ結果がありません</td></tr>`}</tbody></table></div></section>
+      <section class="card"><h2>レースごとの払戻（円）</h2><div class="scroll"><table class="pt h"><thead><tr><th class="l">レース</th><th>等級</th><th>◎</th><th>着順</th><th>人気</th><th>オッズ</th><th>①</th><th>②</th><th>③</th><th>④</th><th>⑤</th></tr></thead><tbody>${rr || `<tr><td class="l muted" colspan="11">まだ結果がありません</td></tr>`}</tbody></table></div></section>
       <div id="hist"></div>`;
     histRender();
   }
@@ -242,13 +242,13 @@ const App = (() => {
     }).join("");
     const kpi = `<div class="kpi"><div><span>レース</span><b>${hd.n}R</b></div><div><span>5つ合計の投資</span><b>${yen(C)}</b></div>
       <div><span>5つ合計の払戻</span><b>${yen(R)}</b></div><div><span>5つ合計の回収率</span><b class="${R >= C ? "plus" : ""}">${C ? (R / C * 100).toFixed(1) + "%" : "—"}</b></div></div>`;
-    const race = rr.map(v => `<tr><td class="l">${esc(v[0])}${v[1]}R</td><td>${esc(v[2])}</td><td>${v[3]}</td><td>${v[4] ? v[4] + "着" : "—"}</td>${v.slice(5).map(x => `<td class="${x > 0 ? "plus" : "muted"}">${x > 0 ? x.toLocaleString() : "·"}</td>`).join("")}</tr>`).join("");
+    const race = rr.map(v => `<tr><td class="l">${esc(v[0])}${v[1]}R</td><td>${esc(v[2])}</td><td>${v[3]}</td><td>${v[4] ? v[4] + "着" : "—"}</td><td>${v[11] ? v[11] + "人気" : "—"}</td><td>${v[10] ? v[10].toFixed(1) : "—"}</td>${v.slice(5, 10).map(x => `<td class="${x > 0 ? "plus" : "muted"}">${x > 0 ? x.toLocaleString() : "·"}</td>`).join("")}</tr>`).join("");
     const lab = hd.src === "実戦" ? "実戦" : "過去のシミュ";
     $("main").innerHTML = `
       <section class="card"><h2>${md(d)}の収支 <span class="stage ${hd.src === "実戦" ? "" : "morning"}" style="margin:0;padding:1px 8px">${lab}</span>　<span class="muted">${esc(hd.v.join("・"))}</span></h2>${kpi}</section>
       <section class="card"><h2>買い方ごと（各2,000円・円）</h2><div class="scroll"><table class="pt"><thead><tr><th class="l">買い方</th><th>的中</th><th>投資</th><th>払戻</th><th>収支</th><th>回収率</th></tr></thead><tbody>${rows}</tbody></table></div>
         ${hd.src === "実戦" ? "" : `<p class="muted">過去のシミュレーション（朝の情報まで・新馬戦と障害は除く）を実際の払戻で計算。</p>`}</section>
-      <section class="card"><h2>レースごとの払戻（円）</h2><div class="scroll"><table class="pt"><thead><tr><th class="l">レース</th><th>等級</th><th>◎</th><th>◎着順</th><th>①</th><th>②</th><th>③</th><th>④</th><th>⑤</th></tr></thead><tbody>${race}</tbody></table></div></section>
+      <section class="card"><h2>レースごとの払戻（円）</h2><div class="scroll"><table class="pt h"><thead><tr><th class="l">レース</th><th>等級</th><th>◎</th><th>着順</th><th>人気</th><th>オッズ</th><th>①</th><th>②</th><th>③</th><th>④</th><th>⑤</th></tr></thead><tbody>${race}</tbody></table></div></section>
       <div id="hist"></div>`;
     histRender();
   }
