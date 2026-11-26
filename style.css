@@ -176,3 +176,4 @@ table.pt tr[data-d]{cursor:pointer}
 }
 @media (min-width:1000px){.howto .top{display:flex}}
 table.pt td small{font-size:10.5px}
+.tog .btn{padding:6px 11px;font-size:13px}@media (min-width:1000px){.tog .btn{font-size:15px;padding:7px 14px}}

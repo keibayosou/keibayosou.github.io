@@ -233,9 +233,10 @@ const App = (() => {
   const sign = x => (x >= 0 ? "+" : "") + man(x);
   const SHORT = { "①": "単勝", "②": "馬連2点", "③": "三連複◎軸", "④": "馬連BOX", "⑤": "三連複BOX" };
   function sumDays(ds) {
-    const s = { n: 0, b: {} };
+    const s = { n: 0, b: {}, t5: [0, 1, 2, 3, 4].map(() => [0, 0, 0]) };
     Object.keys(H.bet_names).forEach(k => s.b[k] = [0, 0, 0]);
-    ds.forEach(d => { s.n += d.n; Object.keys(d.b).forEach(k => { for (let i = 0; i < 3; i++) s.b[k][i] += d.b[k][i]; }); });
+    ds.forEach(d => { s.n += d.n; Object.keys(d.b).forEach(k => { for (let i = 0; i < 3; i++) s.b[k][i] += d.b[k][i]; });
+      (d.t5 || []).forEach((v, i) => v.forEach((c, j) => s.t5[i][j] += c)); });
     return s;
   }
   function cell(c, r) {
@@ -243,7 +244,17 @@ const App = (() => {
     if (hMode === "pl") return `<td class="${r - c >= 0 ? "plus" : "minus"}">${sign(r - c)}</td>`;
     const p = r / c * 100; return `<td class="${p >= 100 ? "plus" : ""}">${p.toFixed(0)}%</td>`;
   }
+  const T5M = { fd: "着別度数", w: "1着率", t3: "3着以内率" };       // 上位5頭着順の見せ方
+  function rowT5(s) {
+    const t5 = s.t5 || (s.t5 = null);
+    if (!t5) return `<td class="muted" colspan="5">—</td>`;
+    return t5.map((v, i) => { const t3 = v[0] + v[1] + v[2], n = s.n;
+      if (hMode === "fd") return `<td>${v[0]}-${v[1]}-${v[2]}-${n - t3}</td>`;
+      const p = (hMode === "w" ? v[0] : t3) / n * 100;
+      return `<td class="${i === 0 ? "" : "muted"}" style="${i === 0 ? "font-weight:800" : ""}">${p.toFixed(0)}%</td>`; }).join("");
+  }
   function rowCells(s) {
+    if (T5M[hMode]) return rowT5(s);
     let C = 0, R = 0;
     const cs = Object.keys(H.bet_names).map(k => { const [c, r] = s.b[k]; C += c; R += r; return cell(c, r); }).join("");
     return cs + cell(C, R).replace("<td", `<td style="font-weight:800"`);
@@ -258,7 +269,8 @@ const App = (() => {
   function histRender() {
     const el = $("hist"); if (!el || !H) return;
     const K = Object.keys(H.bet_names);
-    const head = `<tr><th class="l">${"{L}"}</th><th>R</th>${K.map(k => `<th>${k}</th>`).join("")}<th>合計</th></tr>`;
+    const head = T5M[hMode] ? `<tr><th class="l">${"{L}"}</th><th>R</th>${["◎1位", "○2位", "▲3位", "△4位", "☆5位"].map(k => `<th>${k}</th>`).join("")}</tr>`
+      : `<tr><th class="l">${"{L}"}</th><th>R</th>${K.map(k => `<th>${k}</th>`).join("")}<th>合計</th></tr>`;
     const Y = sumDays(H.days);
     let C = 0, R = 0;
     const yr = K.map(k => {
@@ -275,7 +287,8 @@ const App = (() => {
       const m = d.d.slice(4, 6), mh = m !== lastM ? `<tr><td class="l" colspan="${K.length + 3}" style="background:var(--chip);font-weight:700">${+m}月</td></tr>` : ""; lastM = m;
       return mh + `<tr data-d="${d.d}"><td class="l">${md(d.d)}${tag([d])}<br><small class="muted">${d.v.join("・")}</small></td><td>${d.n}</td>${rowCells(d)}</tr>`;
     }).join("");
-    const tog = `<div class="row" style="margin-bottom:8px"><button class="btn ${hMode === "pl" ? "" : "ghost"}" data-m="pl" style="padding:6px 12px">収支（円）</button><button class="btn ${hMode === "rr" ? "" : "ghost"}" data-m="rr" style="padding:6px 12px">回収率</button></div>`;
+    const tog = `<div class="row tog" style="margin-bottom:8px">${[["pl", "収支（円）"], ["rr", "回収率"], ["fd", "着別度数"], ["w", "1着率"], ["t3", "3着以内率"]].map(([m, l]) => `<button class="btn ${hMode === m ? "" : "ghost"}" data-m="${m}">${l}</button>`).join("")}</div>
+      ${T5M[hMode] ? `<p class="muted" style="margin:0 0 6px">上位5頭着順：シミュ1〜5位の${hMode === "fd" ? "着別度数（1着-2着-3着-4着以下のレース数）" : T5M[hMode]}</p>` : ""}`;
     el.innerHTML = `
       <section class="card"><h2>2026年の通算（${md(first)}〜${md(last)}・${H.days.length}日・${Y.n.toLocaleString()}R）</h2>
         <div class="kpi"><div><span>5つ合計の投資</span><b>${yen(C)}</b></div><div><span>5つ合計の払戻</span><b>${yen(R)}</b></div>
