@@ -86,7 +86,18 @@ const App = (() => {
     <section class="card"><h2>◎ ${r.horses[0].uma} ${esc(r.horses[0].name)} を推す根拠</h2><ul class="why">${why}</ul></section>
     <section class="card"><h2>確率一覧（1万回のシミュレーション）</h2><div class="scroll"><table class="pt">
       <thead><tr><th>順</th><th class="l">印</th><th>馬番</th><th class="l">馬名</th><th>勝率</th><th>2着内</th><th>3着内</th><th>平均着順</th></tr></thead><tbody>${rows}</tbody></table></div></section>
-    <section class="card course"><h2>コースの解説　${esc(r.course.title)}</h2><ul class="why">${crs}</ul></section>`;
+    <section class="card course"><h2>コースの解説　${esc(r.course.title)}</h2><ul class="why">${crs}</ul></section>
+    ${memoCard(r)}`;
+  }
+  function memoCard(r) {      // メモ馬（表示だけ・予想には入れていない）
+    if (!D.memo_on) return "";
+    const ms = r.memo || [];
+    const body = ms.length ? ms.map(m => {
+      const h = r.horses.find(x => x.uma === m.uma) || {};
+      return `<div class="memo ${m.pick ? "pk" : ""}"><div class="mh">${m.pick ? `<b class="star">★厳選${m.pick}</b>` : ""}${wk(h.waku)}${m.uma || "?"}</span> <b>${esc(m.name)}</b>${h.srk ? `<span class="muted">（シミュ${h.srk}位）</span>` : ""}</div>
+        ${m.memo ? `<div class="mt">次走条件　${esc(m.memo)}</div>` : ""}${m.card ? `<div class="mc">📝 ${esc(m.card)}</div>` : ""}</div>`;
+    }).join("") : `<p class="muted" style="margin:0">このレースにメモ馬はいません</p>`;
+    return `<section class="card"><h2>メモ馬（参考・予想には入れていません）</h2>${body}</section>`;
   }
   function renderNav() {
     const ven = [...new Set(D.races.map(r => r.jname))];
