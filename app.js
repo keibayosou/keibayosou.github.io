@@ -87,7 +87,15 @@ const App = (() => {
     <section class="card"><h2>確率一覧（1万回のシミュレーション）</h2><div class="scroll"><table class="pt">
       <thead><tr><th>順</th><th class="l">印</th><th>馬番</th><th class="l">馬名</th><th>勝率</th><th>2着内</th><th>3着内</th><th>平均着順</th></tr></thead><tbody>${rows}</tbody></table></div></section>
     <section class="card course"><h2>コースの解説　${esc(r.course.title)}</h2><ul class="why">${crs}</ul></section>
+    ${babaCard(r)}
     ${memoCard(r)}`;
+  }
+  function babaCard(r) {      // 馬場レポート（参考に反映）
+    const b = r.baba; if (!b) return "";
+    return `<section class="card"><h2>馬場レポート（参考に反映）</h2>
+      <div class="memo"><div class="mt"><b>レポート</b>　${esc(b.report)}</div><div class="mt"><b>シミュの見込み</b>　${esc(b.sim)}</div>
+      <div class="mt" style="color:var(--accent)">→ ${esc(b.act)}</div>
+      ${(b.lines || []).length ? `<div class="mc">${b.lines.map(esc).join("<br>")}</div>` : ""}</div></section>`;
   }
   function memoCard(r) {      // メモ馬（表示だけ・予想には入れていない）
     if (!D.memo_on) return "";
