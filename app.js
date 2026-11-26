@@ -57,7 +57,10 @@ const App = (() => {
       <div class="past">過去の回収率（2026年・この等級）${b.past}%／全体 ${b.past_all}%</div></div>`;
   }
   function raceCard(r) {
-    const stageTxt = r.stage === "30分前" ? `30分前の予想（${esc(r.made)} 更新）` : `朝の予想（発走30分前に出し直します）`;
+    const stageTxt = r.stage === "30分前" ? `30分前の予想・買い目確定（${esc(r.made)}）`
+      : r.stage === "前日" ? `前日の予想（当日8:30と発走30分前に出し直します）` : `当日朝の予想（発走30分前に出し直して確定します）`;
+    const SN = { "前日": "前日", "朝": "朝", "30分前": "確定" };
+    const hist = (r.hist || []).length > 1 ? `<div class="muted" style="margin-top:4px;font-size:11.5px">◎の変化：${r.hist.map(([s, u]) => `${SN[s] || esc(s)} ${u}番`).join(" → ")}</div>` : "";
     const notes = (r.notes || []).map(n => `<div class="note">${esc(n)}</div>`).join("");
     const top5 = r.horses.slice(0, 5).map(h => horseLine(h, r)).join("");
     const res = r.result;
@@ -73,7 +76,7 @@ const App = (() => {
       <div class="race-h"><div>
         <div class="rt">${esc(r.jname)} ${r.rn}R <span style="font-weight:600">${esc(r.post)}発走</span></div>
         <div class="rs">${esc(r.title)}　${esc(r.surf)}${r.dist}m・${r.n}頭${r.going ? "・馬場 " + esc(r.going) : ""}</div>
-        <span class="stage ${r.stage === "30分前" ? "" : "morning"}">${stageTxt}</span>${notes}
+        <span class="stage ${r.stage === "30分前" ? "" : "morning"}">${stageTxt}</span>${hist}${notes}
       </div>
       <div class="grade g${esc(r.grade)}"><span>自信</span><b>${esc(r.grade)}</b><span>${GTXT[r.grade] || ""}</span></div></div>
     </section>
