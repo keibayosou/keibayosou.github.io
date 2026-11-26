@@ -93,7 +93,7 @@ const App = (() => {
         <div class="rt">${esc(r.jname)} ${r.rn}R <span style="font-weight:600">${esc(r.post)}発走</span></div>
         <div class="rs">${esc(r.title)}　${esc(r.surf)}${r.dist}m・${r.n}頭${r.going ? "・馬場 " + esc(r.going) : ""}</div>
         <div id="rclose" class="rclose" data-k="${esc(r.key)}"></div>
-        <span class="stage ${r.stage === "30分前" ? "" : "morning"}">${stageTxt}</span>${hist}${notes}
+        <span class="stage ${r.stage === "30分前" ? "" : "morning"}">${stageTxt}</span> <a class="howto-l" href="howto.html">予想の考え方 ›</a>${hist}${notes}
       </div>
       <div class="grade g${esc(r.grade)}"><span>自信</span><b>${esc(r.grade)}</b><span>${GTXT[r.grade] || ""}</span></div></div>
     </section>
