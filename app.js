@@ -68,7 +68,8 @@ const App = (() => {
        <span class="o">◎は${res.hon_fin ? res.hon_fin + "着" : "—"}</span></div>
        <div class="muted" style="margin-top:6px">単勝 ${res.tan.map(([k, v]) => k.join("") + "番 " + yen(v)).join("・")}　馬連 ${res.umaren.map(([k, v]) => k.join("-") + " " + yen(v)).join("・")}　三連複 ${res.sanrenpuku.map(([k, v]) => k.join("-") + " " + yen(v)).join("・")}</div></section>` : "";
     const rows = r.horses.map(h => `<tr class="${h.srk <= 5 ? "top5" : ""}"><td>${h.srk}</td><td class="l">${esc(h.mark)}</td><td>${wk(h.waku)}${h.uma}</span></td>
-        <td class="nmc">${esc(h.name)}</td><td>${pct(h.p1)}</td><td>${pct(h.p2, 0)}</td><td>${pct(h.p3, 0)}</td><td>${h.avg.toFixed(1)}</td></tr>`).join("");
+        <td class="nmc">${esc(h.name)}</td><td>${pct(h.p1)}</td><td>${pct(h.p2, 0)}</td><td>${pct(h.p3, 0)}</td><td>${h.avg.toFixed(1)}</td><td>${(h.odds_f ?? h.odds) ? (h.odds_f ?? h.odds).toFixed(1) : "—"}</td></tr>`).join("");
+    const oddsNote = r.horses.some(h => h.odds_f) ? "オッズは確定の単勝" : r.horses.some(h => h.odds) ? `オッズは${esc(r.odds_at)}時点の単勝` : "オッズは当日朝から出ます";
     const why = r.reasons.map(t => `<li class="${t.startsWith("⚠") ? "w" : ""}">${esc(t)}</li>`).join("");
     const crs = (r.course.lines || []).map(t => `<li>${esc(t)}</li>`).join("");
     return `
@@ -85,7 +86,7 @@ const App = (() => {
     <section class="card"><h2>おすすめの買い目（各2,000円）</h2>${r.bets.map(b => betBlock(b, res)).join("")}</section>
     <section class="card"><h2>◎ ${r.horses[0].uma} ${esc(r.horses[0].name)} を推す根拠</h2><ul class="why">${why}</ul></section>
     <section class="card"><h2>確率一覧（1万回のシミュレーション）</h2><div class="scroll"><table class="pt">
-      <thead><tr><th>順</th><th class="l">印</th><th>馬番</th><th class="l">馬名</th><th>勝率</th><th>2着内</th><th>3着内</th><th>平均着順</th></tr></thead><tbody>${rows}</tbody></table></div></section>
+      <thead><tr><th>順</th><th class="l">印</th><th>馬番</th><th class="l">馬名</th><th>勝率</th><th>2着内</th><th>3着内</th><th>平均着順</th><th>オッズ</th></tr></thead><tbody>${rows}</tbody></table></div><p class="muted" style="margin:6px 0 0">${oddsNote}（表示だけ。予想にはオッズ・人気を使っていません）</p></section>
     <section class="card course"><h2>コースの解説　${esc(r.course.title)}</h2><ul class="why">${crs}</ul></section>
     ${babaCard(r)}
     ${memoCard(r)}`;
