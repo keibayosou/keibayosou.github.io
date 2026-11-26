@@ -137,7 +137,9 @@ const App = (() => {
   const WD = "日月火水木金土";
   const dObj = d => new Date(+d.slice(0, 4), +d.slice(4, 6) - 1, +d.slice(6, 8));
   const md = d => `${+d.slice(4, 6)}/${+d.slice(6, 8)}(${WD[dObj(d).getDay()]})`;
-  const sign = x => (x >= 0 ? "+" : "") + x.toLocaleString("ja-JP");
+  const man = x => Math.abs(x) >= 10000 ? (x / 10000).toFixed(Math.abs(x) >= 1e6 ? 0 : 1) + "万" : x.toLocaleString("ja-JP");
+  const sign = x => (x >= 0 ? "+" : "") + man(x);
+  const SHORT = { "①": "単勝", "②": "馬連2点", "③": "三連複◎軸", "④": "馬連BOX", "⑤": "三連複BOX" };
   function sumDays(ds) {
     const s = { n: 0, b: {} };
     Object.keys(H.bet_names).forEach(k => s.b[k] = [0, 0, 0]);
@@ -169,7 +171,7 @@ const App = (() => {
     let C = 0, R = 0;
     const yr = K.map(k => {
       const [c, r, h] = Y.b[k]; C += c; R += r;
-      return `<tr><td class="l">${esc(k)} ${esc(H.bet_names[k])}</td><td>${h}</td><td>${(h / Y.n * 100).toFixed(1)}%</td><td>${yen(c)}</td><td>${yen(r)}</td><td class="${r - c >= 0 ? "plus" : "minus"}">${sign(r - c)}円</td><td><b>${(r / c * 100).toFixed(1)}%</b></td></tr>`;
+      return `<tr><td class="l" style="white-space:nowrap">${esc(k)} ${esc(SHORT[k] || "")}</td><td>${(h / Y.n * 100).toFixed(1)}%</td><td>${man(c)}</td><td>${man(r)}</td><td class="${r - c >= 0 ? "plus" : "minus"}">${sign(r - c)}</td><td><b>${(r / c * 100).toFixed(1)}%</b></td></tr>`;
     }).join("");
     const first = H.days[0].d, last = H.days.at(-1).d, live = H.days.filter(d => d.src === "実戦");
     const tag = ds => ds.some(d => d.src === "実戦") ? ` <span class="stage" style="margin:0;padding:1px 6px">実戦</span>` : "";
@@ -186,7 +188,8 @@ const App = (() => {
       <section class="card"><h2>2026年の通算（${md(first)}〜${md(last)}・${H.days.length}日・${Y.n.toLocaleString()}R）</h2>
         <div class="kpi"><div><span>5つ合計の投資</span><b>${yen(C)}</b></div><div><span>5つ合計の払戻</span><b>${yen(R)}</b></div>
         <div><span>5つ合計の収支</span><b class="${R - C >= 0 ? "plus" : "minus"}">${sign(R - C)}円</b></div><div><span>5つ合計の回収率</span><b>${(R / C * 100).toFixed(1)}%</b></div></div>
-        <div class="scroll" style="margin-top:10px"><table class="pt"><thead><tr><th class="l">買い方（各2,000円）</th><th>的中</th><th>的中率</th><th>投資</th><th>払戻</th><th>収支</th><th>回収率</th></tr></thead><tbody>${yr}</tbody></table></div>
+        <div class="scroll" style="margin-top:10px"><table class="pt"><thead><tr><th class="l">買い方</th><th>的中率</th><th>投資</th><th>払戻</th><th>収支</th><th>回収率</th></tr></thead><tbody>${yr}</tbody></table></div>
+        <p class="muted">金額は円（万＝1万円）。各買い方とも1R 2,000円。② ◎-2位,3位　③ ◎軸で2〜6位へ10点　④ 1〜5位のBOX　⑤ 1〜5位のBOX</p>
         <p class="muted">${live.length ? `実戦は${md(live[0].d)}から。それより前は` : ""}過去のシミュレーション（予想の作り方は本番と同じ・朝の情報まで）を、実際の払戻で計算したもの。新馬戦・障害は含みません。</p></section>
       <section class="card"><h2>開催ごと（土日・3日開催はまとめて）</h2>${tog}<div class="scroll"><table class="pt"><thead>${head.replace("{L}", "開催")}</thead><tbody>${gr}</tbody></table></div></section>
       <section class="card"><h2>日別</h2>${tog}<div class="scroll"><table class="pt"><thead>${head.replace("{L}", "日付")}</thead><tbody>${dr}</tbody></table></div></section>`;
